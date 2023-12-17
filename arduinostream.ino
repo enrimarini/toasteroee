@@ -5,76 +5,99 @@
 const char* ssid = "yourSSID";
 const char* password = "yourPASSWORD";
 
-// MQTT broker settings
-const char* mqtt_server = "broker.hivemq.com"; // Replace with the address of your MQTT broker
-const int mqtt_port = 1883; // Replace with your MQTT broker port
-
+// MQTT Broker settings
+const char* mqtt_server = "broker.hivemq.com";
 WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);
 
-int sensorPin = A0;
-int sensorValue = 0;
+// Constants for analog reading
+const int maxADCReading = 1023;
+const int maxCurrent = 12.5;  // Assumed maximum current in amperes
 
 void setup() {
-    Serial.begin(9600);
-    Serial.println("Connecting to WiFi...");
+  Serial.begin(115200);
 
-    WiFi.begin(ssid, password);
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
-        Serial.print(".");
-    }
-    Serial.println("\nConnected to WiFi");
+  // Connect to WiFi
+  connectToWiFi();
 
-  // Print IP address
-    Serial.print("IP Address: ");
-    Serial.println(WiFi.localIP());
-
-    // Delay before attempting MQTT connection
-    delay(1000);
-
-    mqttClient.setServer(mqtt_server, mqtt_port);
-    reconnect();
+  // Setup MQTT connection
+  mqttClient.setServer(mqtt_server, 1883);
+  connectToMQTT();
 }
 
 void loop() {
-    if (!mqttClient.connected()) {
-        reconnect();
-    }
-    mqttClient.loop();
+  // Maintain WiFi and MQTT connections
+  checkWiFiConnection();
+  if (!mqttClient.connected()) {
+    connectToMQTT();
+  }
+  mqttClient.loop();
 
-    sensorValue = readAverage(sensorPin, 10);
-    Serial.print("Sensor value: ");
-    Serial.println(sensorValue);
+  // Read and process the analog input
+  readAnalogInput();
 
-    String payload = String(sensorValue);
-    if (mqttClient.publish("toaster/current", payload.c_str())) {
-        Serial.println("Publish successful");
+  // Additional delay to control loop execution frequency
+  delay(1000);
+}
+
+void connectToWiFi() {
+  Serial.print("Connecting to ");
+  Serial.print(ssid);
+  WiFi.begin(ssid, password);
+  
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  
+  Serial.println("\nConnected to WiFi");
+  Serial.print("IP Address: ");
+  Serial.println(WiFi.localIP());
+}
+
+void checkWiFiConnection() {
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("WiFi connection lost. Reconnecting...");
+    connectToWiFi();
+  }
+}
+
+void connectToMQTT() {
+  while (!mqttClient.connected()) {
+    Serial.println("Connecting to MQTT...");
+    if (mqttClient.connect("arduinoClient")) {
+      Serial.println("Connected to MQTT");
     } else {
-        Serial.println("Publish failed");
+      Serial.print("Failed, rc=");
+      Serial.print(mqttClient.state());
+      Serial.println(" try again in 5 seconds");
+      delay(5000);
     }
-
-    delay(1000);
+  }
 }
 
-int readAverage(int pin, int numberOfReadings) {
-    long sum = 0;
-    for (int i = 0; i < numberOfReadings; i++) {
-        sum += analogRead(pin);
-        delay(10);
-    }
-    return sum / numberOfReadings;
-}
+const char* mqtt_topic = "home/arduino/current"; // MQTT topic
 
-void reconnect() {
-    while (!mqttClient.connected()) {
-        Serial.println("Attempting MQTT connection...");
-        if (mqttClient.connect("ArduinoClient")) {
-            Serial.println("Connected to MQTT Broker!");
-        } else {
-            Serial.print("Failed to connect, state: ");
-            Serial.println(mqttClient.state());
-            delay(5000);
-        }
-    }
+void readAnalogInput() {
+  // Read the analog value
+  int adcValue = analogRead(A0);
+
+  // Convert the ADC reading to current
+  float current = (float)adcValue / maxADCReading * maxCurrent;
+
+  // Print the calculated current to the serial monitor
+  Serial.print("Current: ");
+  Serial.print(current);
+  Serial.println(" A");
+
+  // For troubleshooting, publish the current reading as a plain number
+  char currentStr[16];
+  dtostrf(current, 6, 2, currentStr); // Convert float to string
+
+  // Publish the current reading to the MQTT topic
+  if (!mqttClient.publish(mqtt_topic, currentStr)) {
+    Serial.println("Publish failed");
+  } else {
+    Serial.println("Publish succeeded");
+  }
 }

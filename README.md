@@ -20,3 +20,13 @@ The aggregate OEE pie chart feature and single bar chart showing a 1-hour timeli
 ## Design Choices
 - Network credentials hard-coded because using temporary guest-network.
 - Data not stored on Streamlit app, reading data straight from broker instead of storing to database, writing processed data back to broker as new topic packaged as JSON object because it avoids having to store data and the fidelity is low.
+
+## App Visuals
+
+### Example of machine state registering as 'ON'
+![image](https://github.com/enrimarini/toasteroee/assets/98195595/f734129f-1e49-469a-9cc1-86090bae0682)
+
+
+### Example of machine state registering as 'OFF'
+![image](https://github.com/enrimarini/toasteroee/assets/98195595/fe5aa678-ebfd-44f7-9f1b-a50a64cc9f0b)
+

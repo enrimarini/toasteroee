@@ -12,15 +12,11 @@ Then Streamlit is used to build an OEE pie-chart to show the percentage of time 
 
 The aggregate OEE pie chart feature and single bar chart showing a 1-hour timeline of the machine state can readily be used in other Streamlit projects. This project demonstrates the power of FOSS LCAP technologies and their superiority over Commercial Off-The-Shelf (COTS) software by being able to directly create custom features in the LCAP product through injection of code rather than having to struggle with cumbersome GUI and menus. 
 
-
 ## Script Explanation
-*'process_mqtt_asjson.py' processes the raw MQTT data the Arduino streams by creating 1 new MQTT topic called 'processed/home/arduino/state' that parses the value of the current into json object
-
-*'streamlit.py' contains the aggregate OEE pie chart and horizontally oriented single bar chart features in 1 script
-
-*'piechart_separately.py' and 'timelinechart_separately.py' contain the aggregate OEE pie chart and horizontally oriented single bar chart features separately for others to use in future projects
+- `process_mqtt_asjson.py` processes the raw MQTT data the Arduino streams by creating 1 new MQTT topic called 'processed/home/arduino/state' that parses the value of the current into json object.
+- `streamlit.py` contains the aggregate OEE pie chart and horizontally oriented single bar chart features in 1 script.
+- `piechart_separately.py` and `timelinechart_separately.py` contain the aggregate OEE pie chart and horizontally oriented single bar chart features separately for others to use in future projects.
 
 ## Design Choices
-*Network credentials hard-coded because using temporary guest-network
-
-*Data not stored on Streamlit app, reading data straight from broker instead of storing to database, writing processed data back to broker as new topic packaged as JSON object because it avoids having to store data and the fidelity is low
+- Network credentials hard-coded because using temporary guest-network.
+- Data not stored on Streamlit app, reading data straight from broker instead of storing to database, writing processed data back to broker as new topic packaged as JSON object because it avoids having to store data and the fidelity is low.
